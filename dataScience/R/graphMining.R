@@ -1,6 +1,6 @@
-workingDir <- "/home/owen/Desktop/CyberlyticChallenges/dataScience/"
+workingDir <- "/path/to/directory/CyberlyticChallenges/dataScience/"
 
-# Install and load packages
+# Install and load R packages
 
 packages <- c("urltools", "ggplot2", "igraph")
 newPackages <- packages[!(packages %in% installed.packages()[, "Package"])]
@@ -11,7 +11,7 @@ if (length(newPackages) > 0) {
 }
 lapply(packages, library, c = TRUE)
 
-# Initiate SQL detection engine (libinjection)
+# Initiate SQL detection engine [libinjection] to be called by R
 
 dyn.load(paste0(workingDir, "libInjection/libinjection_sqli"),
          now = TRUE)
@@ -58,9 +58,9 @@ requestStats <- data.frame(Description = statDesc,
 print(requestStats)
 
 ## Q2 : Are there any malicious activities?
-# Crude identification of maicious traffic
+# Crude identification of maicious traffic using SQL detection engine [libinjection]
 
-trafficData$parameter <- urltools::url_parse(url_decode(trafficData$requestURLPath))$parameter
+trafficData$parameter <- urltools::url_parse(urltools::url_decode(trafficData$requestURLPath))$parameter
 isSQLi <- sapply(1:nrow(trafficData), function(x) {
   .C("libinjection_sqli",
      s = as.character(trafficData$parameter[x]),
@@ -83,6 +83,7 @@ wGetData <- trafficData[agrep(pattern = "wget",
 maliciousIPs <- unique(c(unique(SQLMapData$sourceIP),
                          unique(wGetData$sourceIP)))
 noMaliciousIPs <- length(maliciousIPs)
+print(maliciousIPs)
 
 ## Q3 : Representing as a directed graph
 # Graph mining
