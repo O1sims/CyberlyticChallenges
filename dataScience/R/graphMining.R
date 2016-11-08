@@ -1,3 +1,5 @@
+workingDir <- "/home/owen/Desktop/CyberlyticChallenges/dataScience/"
+
 # Install and load packages
 
 packages <- c("urltools", "ggplot2", "igraph")
@@ -8,23 +10,31 @@ if (length(newPackages) > 0) {
                    dependencies = TRUE)
 }
 lapply(packages, library, c = TRUE)
-workingDir <- "path/to/CyberlyticChallenges/dataScience"
+
+# Initiate SQL detection engine (libinjection)
+
+dyn.load(paste0(workingDir, "libInjection/libinjection_sqli"),
+         now = TRUE)
+
+# Load up the traffic data
+
 load(file = paste0(workingDir, "data/trafficData.rda"))
 
+## Q1 : Present summary statistics
 # Some graphs on traffic and IPs
 
-trafficHist <- ggplot2::ggplot(trafficData, 
-                               aes(x=as.POSIXct(trafficData$timestamp))) + 
+trafficHist <- ggplot2::ggplot(trafficData,
+                               aes(x = as.POSIXct(trafficData$timestamp))) +
   geom_histogram(binwidth = 10) +
   labs(title = "Traffic histogram",
        x = "Time",
        y = "Frequency")
 sourceIPs <- as.data.frame(table(trafficData$sourceIP),
                            stringsAsFactors = TRUE)
-trafficIPs <- ggplot2::ggplot(data = sourceIPs, 
-                              mapping = aes(x = sourceIPs$Var1, 
+trafficIPs <- ggplot2::ggplot(data = sourceIPs,
+                              mapping = aes(x = sourceIPs$Var1,
                                             y = log(sourceIPs$Freq))) +
-  geom_point(size = 4, 
+  geom_point(size = 4,
              shape = 19,
              aes(colour = sourceIPs$Var1)) +
   labs(title = "Quantity of traffic from each IP",
@@ -45,16 +55,36 @@ stats <- c(noIPs, mean(sourceIPs$Freq), max(sourceIPs$Freq), as.character(source
 requestStats <- data.frame(Description = statDesc,
                            Stats = stats,
                            stringsAsFactors = FALSE)
+print(requestStats)
 
-# Maicious traffic
+## Q2 : Are there any malicious activities?
+# Crude identification of maicious traffic
+
+trafficData$parameter <- urltools::url_parse(url_decode(trafficData$requestURLPath))$parameter
+isSQLi <- sapply(1:nrow(trafficData), function(x) {
+  .C("libinjection_sqli",
+     s = as.character(trafficData$parameter[x]),
+     slen = as.integer(nchar(as.character(trafficData$parameter[x]))),
+     b = as.integer(9),
+     fin0 = as.character(""),
+     fin1 = as.character(""),
+     fin2 = as.character(""),
+     fin3 = as.character(""),
+     fin4 = as.character(""))$b})
+maliciousTraffic <- subset(trafficData,
+                           isSQLi == 1)
+
+# Parse out malicious traffic that is interesting to us
 
 SQLMapData <- trafficData[agrep(pattern = "sqlmap",
                                 x = trafficData$`requestHeaders.User-Agent`), ]
 wGetData <- trafficData[agrep(pattern = "wget",
                               x = trafficData$`requestHeaders.User-Agent`), ]
-maliciousIPs <- unique(c(unique(SQLMapData$sourceIP), 
+maliciousIPs <- unique(c(unique(SQLMapData$sourceIP),
                          unique(wGetData$sourceIP)))
+noMaliciousIPs <- length(maliciousIPs)
 
+## Q3 : Representing as a directed graph
 # Graph mining
 
 trafficData$URLs <- trafficData$requestURLPath
@@ -140,10 +170,10 @@ plot(net,
 title(main = paste0("Aggregate flow graph (weights are logged)"))
 dev.off()
 
-# Anomalous requests
-# Two methods used to identify anomalous requests: (1) The length of query values; and (2) The character distribution of query values
+## Q4 : Methods for looking at anomalous requests
+# Two methods used to identify anomalous requests: (i) The length of query values; and (ii) The character distribution of query values
 
-# (1) Query character length
+# (i) Query character length
 
 parameters <- na.omit(urltools::url_parse(as.character(trafficData$requestURLPath))$parameter)
 noParameters <- length(parameters)
@@ -173,9 +203,9 @@ args <- urltools::url_decode(args)
 arguments <- data.frame(name = argNames,
                         argument = args,
                         length = argLength)
-argumentDensity <- ggplot2::ggplot(data = arguments, 
-                                   mapping = aes(x = length, 
-                                                 fill = name, 
+argumentDensity <- ggplot2::ggplot(data = arguments,
+                                   mapping = aes(x = length,
+                                                 fill = name,
                                                  colour = name)) +
   geom_density(alpha = 0.1) +
   labs(title = "Density of character length for each parameter",
@@ -190,7 +220,7 @@ for (i in 1:length(uniArgNames)) {
   if (i == 1) {
     avgLength <- mean(na.omit(argSubset$length))
     sdLength <- sd(na.omit(argSubset$length))
-  } else{
+  } else {
     avgLength[i] <- mean(na.omit(argSubset$length))
     sdLength[i] <- sd(na.omit(argSubset$length))
   }
@@ -200,7 +230,7 @@ argumentStats <- data.frame(name = uniArgNames,
                             sdLength = sdLength,
                             varLength = sdLength ^ 2)
 
-# (2) Query character distribution (Create a Idealised Character Distribution [ICD])
+# (ii) Query character distribution (Create a Idealised Character Distribution [ICD])
 
 df <- sapply(1:nrow(arguments), function(x) {
   b <- sort(as.data.frame(table(strsplit(as.character(arguments$argument[x]), "")[[1]]))$Freq,
