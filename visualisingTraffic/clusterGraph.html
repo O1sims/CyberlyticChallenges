@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<head>
+<title>The Flow of HTTP Traffic</title>
+<link rel="stylesheet" href="style/style.css" type="text/css" media="screen"/>
+<link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+</head>
+<meta charset="utf-8">
+<style>.node{stroke-width:1.5px;}</style>
+<body>
+<div id="main-wrapper">
+<div id="sidebar">
+<div id="current_time">4:00am</div>
+<div id="speed">
+<div class="togglebutton slow current" data-val="slow">Slow</div>
+<div class="togglebutton medium" data-val="medium">Medium</div>
+<div class="togglebutton fast" data-val="fast">Fast</div>
+<div class="clr"></div>
+</div>
+<div id="note"></div>
+<div id="cite">
+</div>
+</div>
+<div id="chart"></div>
+<div class="clr"></div>
+</div>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="clusterGraph.js"></script>
