@@ -7,7 +7,7 @@ RUN apt-get -qq update
 RUN apt-get install -qq -y build-essential libffi-dev python3-dev
 
 # Set up the Eve framework
-RUN mkdir -p /app
+RUN mkdir /app
 WORKDIR /app
 COPY requirements.txt /app
 RUN pip install -r requirements.txt
