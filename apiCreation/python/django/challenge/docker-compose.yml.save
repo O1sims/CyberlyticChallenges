@@ -1,0 +1,25 @@
+ version: '2'
+ services:
+   riskdb:
+     restart: unless-stopped
+     image: mongo:latest
+     command: mongod --port 8210
+     ports:
+       - "8210:8210"
+
+   riskui:
+     restart: unless-stopped
+     image: riskui:latest
+     command: python /JUMP/manage.py runserver 0.0.0.0:8200
+     ports:
+       - "8200:8200"
+     volumes:
+       - ".
+     depends_on:
+       - mongodb
+     environment:
+       - DB_PORT=27017
+       - API_PORT=5000
+       - DB_HOST=mongodb
+       - API_HOST=api
+       - DB_NAME=PersonDB
