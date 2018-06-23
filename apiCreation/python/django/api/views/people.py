@@ -38,16 +38,11 @@ class PeopleView(ListCreateAPIView, DestroyAPIView):
         return Response(status=201)
 
     def delete(self, request, *args, **kwargs):
-        mongo_id = self.request.GET.get('id', None)
-        if mongo_id is None:
-            raise ValueError(
-                "Please provide a Mongo ID as query parameter (id)")
-        self.people_collection.delete_one(
-            {'_id': ObjectId(mongo_id)})
+        self.people_collection.drop()
         return Response(status=204)
 
 
-class PeopleNameView(ListAPIView):
+class PeopleLastNameView(ListAPIView):
         renderer_classes = (JSONRenderer,)
         serializer_class = PeopleModel
 
@@ -67,3 +62,27 @@ class PeopleNameView(ListAPIView):
             return Response(
                 data=people_list,
                 status=200)
+
+
+class PeopleIdView(ListAPIView, DestroyAPIView):
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PeopleModel
+
+    def __init__(self):
+        self.people_collection = pm.MongoClient(
+            host=os.environ.get('DB_HOST'),
+            port=int(os.environ.get('DB_PORT'))
+        )[os.environ.get('DB_NAME')]['people']
+
+    def get(self, request, *args, **kwargs):
+        person = self.people_collection.find_one({
+            '_id': ObjectId(self.kwargs['id'])})
+        person["_id"] = str(person["_id"])
+        return Response(
+            data=person,
+            status=200)
+
+    def delete(self, request, *args, **kwargs):
+        self.people_collection.delete_one({
+            '_id': ObjectId(self.kwargs['id'])})
+        return Response(status=204)

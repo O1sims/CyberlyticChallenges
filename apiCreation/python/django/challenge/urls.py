@@ -4,7 +4,7 @@ from django.conf.urls import url
 
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from api.views.people import PeopleView, PeopleNameView
+from api.views.people import PeopleView, PeopleIdView, PeopleLastNameView
 
 
 urlpatterns = format_suffix_patterns([
@@ -12,7 +12,11 @@ urlpatterns = format_suffix_patterns([
         config.API_VERSION),
         PeopleView.as_view()),
 
-    url(r'^people/(?P<lastname>.+)/$'.format(
+    url(r'^people/lastname/(?P<lastname>.+)/$'.format(
         config.API_VERSION),
-        PeopleNameView.as_view()),
+        PeopleLastNameView.as_view()),
+
+    url(r'^people/id/(?P<id>.+)/$'.format(
+        config.API_VERSION),
+        PeopleIdView.as_view()),
 ])
