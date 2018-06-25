@@ -43,25 +43,25 @@ class PeopleView(ListCreateAPIView, DestroyAPIView):
 
 
 class PeopleLastNameView(ListAPIView):
-        renderer_classes = (JSONRenderer,)
-        serializer_class = PeopleModel
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PeopleModel
 
-        def __init__(self):
-            self.people_collection = pm.MongoClient(
-                host=os.environ.get('DB_HOST'),
-                port=int(os.environ.get('DB_PORT'))
-            )[os.environ.get('DB_NAME')]['people']
+    def __init__(self):
+        self.people_collection = pm.MongoClient(
+            host=os.environ.get('DB_HOST'),
+            port=int(os.environ.get('DB_PORT'))
+        )[os.environ.get('DB_NAME')]['people']
 
-        def get(self, request, *args, **kwargs):
-            people_list = list(self.people_collection.find({
-                'lastname': re.compile(
-                    self.kwargs['lastname'],
-                    re.IGNORECASE)}))
-            for person in people_list:
-                person["_id"] = str(person["_id"])
-            return Response(
-                data=people_list,
-                status=200)
+    def get(self, request, *args, **kwargs):
+        people_list = list(self.people_collection.find({
+            'lastname': re.compile(
+                self.kwargs['lastname'],
+                re.IGNORECASE)}))
+        for person in people_list:
+            person["_id"] = str(person["_id"])
+        return Response(
+            data=people_list,
+            status=200)
 
 
 class PeopleIdView(ListAPIView, DestroyAPIView):
