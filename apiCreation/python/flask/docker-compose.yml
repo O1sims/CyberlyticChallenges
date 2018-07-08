@@ -1,0 +1,27 @@
+ version: '2'
+ services:
+   mongodb:
+     container_name: 'mongodb'
+     restart: unless-stopped
+     image: mongo:latest
+     ports:
+       - "27017:27017"
+
+   api:
+     container_name: 'api'
+     restart: unless-stopped
+     image: api:latest
+     command: python /app/api/run.py
+     ports:
+       - "5000:5000"
+     volumes:
+       - ".:/app/"
+     depends_on:
+       - mongodb
+     environment:
+       - DB_PORT=27017
+       - API_PORT=5000
+       - DB_HOSTNAME=mongodb
+       - API_HOSTNAME=0.0.0.0
+       - DB_NAME=PeopleDB
+       - DEBUG_MODE=True
