@@ -1,0 +1,15 @@
+[
+    {
+        "firstName": "John",
+        "lastName": "Smith"
+    },
+    {
+        "firstName": "Jane",
+        "lastName": "Smith"
+    },
+    {
+        "firstName": "Captain",
+        "lastName": "Birdseye",
+        "age": 400
+    }
+]
